@@ -1,1 +1,21 @@
-# Add any form classes for Flask-WTF here
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, EmailField, TextAreaField
+from flask_wtf.file import FileField, FileRequired, FileAllowed
+from wtforms.validators import InputRequired, Email
+
+
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[InputRequired()])
+    password = PasswordField('Password', validators=[InputRequired()])
+
+
+class RegisterForm(FlaskForm):
+    username = StringField('Username', validators=[InputRequired()])
+    firstname = StringField('First Name', validators=[InputRequired()])
+    lastname = StringField('Last Name', validators=[InputRequired()])
+    email = EmailField('Email', validators=[InputRequired()])
+    password = PasswordField('Password', validators=[InputRequired()])
+    location = StringField('Location', validators=[InputRequired()])
+    biography = TextAreaField('Location', validators=[InputRequired()])
+    # profile_photo = FileField("Poster", validators=[FileRequired(), FileAllowed(
+    #     ['jpg', 'png'], 'Upload a .png or .jpg file')])
