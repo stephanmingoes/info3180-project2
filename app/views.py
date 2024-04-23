@@ -35,9 +35,10 @@ def get_csrf():
 @app.route('/api/v1/register', methods=['POST'])
 def register():
     form = RegisterForm()
+
     if form.validate_on_submit():
-        existing_user = db.first_or_404(db.select(Users).filter(
-            (Users.username == form.data["username"]) | (Users.email == form.data["email"])))
+        existing_user = db.session.execute(db.select(Users).filter(
+            (Users.username == form.data["username"]) | (Users.email == form.data["email"]))).scalar()
 
         if existing_user:
             return jsonify({"message": "User or email taken already"}), 401
@@ -56,22 +57,24 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+        return jsonify({"message": "Registration was successful"}), 200
+
     return jsonify({"message": "Registration Failed"}), 401
 
 
 @app.route('/api/v1/auth/login', methods=['POST'])
 def login():
     form = LoginForm()
-    print(form.data)
+
     if form.validate_on_submit():
-        user = db.first_or_404(db.select(Users).filter_by(
-            username=form.data["username"]))
+        user = db.session.execute(db.select(Users).filter_by(
+            username=form.data["username"])).scalar()
 
         if not user or not check_password_hash(user.password, form.data["password"]):
             return jsonify({"message": "Login Failed"}), 401
 
         token = jwt.encode({
-            'sub': user["username"],
+            'sub': user.username,
             'iat': datetime.utcnow(),
             'exp': datetime.utcnow() + timedelta(minutes=120)
         }, app.config['SECRET_KEY'], algorithm="HS256")
@@ -80,14 +83,25 @@ def login():
 
         return jsonify({
             "token": token
-        })
+        }), 200
 
     return jsonify({"message": "Login Failed"}), 401
 
 
 @app.route('/api/v1/auth/logout', methods=['POST'])
 def logout():
-    return jsonify(message="This is the beginning of our API")
+    logout_user()
+
+    return jsonify({"message": "User logged out"}), 200
+
+
+@app.route('/api/v1/posts')
+@login_required
+def get_posts():
+    posts = db.session.execute(db.select(Posts)).scalars().all()
+    return jsonify({
+        "posts": [{"id": p.id, "caption": p.caption, "photo": p.photo, "likes": len(p.likes)} for p in posts]
+    })
 
 
 @login_manager.user_loader
@@ -104,8 +118,8 @@ def load_user_from_request(request):
         token = auth_headers[1]
         data = jwt.decode(
             token, app.config['SECRET_KEY'], algorithms=["HS256"])
-        user = db.first_or_404(
-            db.select(Users).filter_by(username=data['sub']))
+        user = db.session.execute(
+            db.select(Users).filter_by(username=data['sub'])).scalar()
 
         if user:
             return user

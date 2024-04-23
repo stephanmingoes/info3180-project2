@@ -28,7 +28,7 @@ class Posts(db.Model):
             return str(self.id)  # python 3 support
 
     def __repr__(self):
-        return '<Post %r>' % (self.username)
+        return '<Post %r>' % (self.id)
 
 
 class Likes(db.Model):
@@ -54,7 +54,7 @@ class Likes(db.Model):
             return str(self.id)  # python 3 support
 
     def __repr__(self):
-        return '<Likes %r>' % (self.username)
+        return '<Likes %r>' % (self.post_id)
 
 
 class Follows(db.Model):
@@ -82,7 +82,7 @@ class Follows(db.Model):
             return str(self.id)  # python 3 support
 
     def __repr__(self):
-        return '<Follows %r>' % (self.username)
+        return '<Follows %r>' % (self.id)
 
 
 class Users(db.Model):
@@ -90,7 +90,7 @@ class Users(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(128))
-    password = db.Column(db.String(80))
+    password = db.Column(db.String(255))
     firstname = db.Column(db.String(255))
     lastname = db.Column(db.String(255))
     email = db.Column(db.String(128), unique=True)
@@ -100,10 +100,12 @@ class Users(db.Model):
     joined_on = db.Column(db.DateTime, default=db.func.current_timestamp())
     posts = db.relationship('Posts', backref='users', lazy=True)
     likes = db.relationship('Likes', backref='users', lazy=True)
-    follows = db.relationship('Follows', backref='users', lazy=True)
-    followers = db.relationship('Follows', backref='users', lazy=True)
+    follows = db.relationship('Follows', foreign_keys=[
+                              Follows.user_id], lazy=True)
+    followers = db.relationship('Follows', foreign_keys=[
+                                Follows.follower_id], backref='followers', lazy=True)
 
-    def __init__(self, username, password, firstname, lastname, email, location, biography, profile_photo, joined_on):
+    def __init__(self, username, password, firstname, lastname, email, location, biography):
         self.username = username
         self.password = generate_password_hash(
             password, method='pbkdf2:sha256')
@@ -112,8 +114,6 @@ class Users(db.Model):
         self.email = email
         self.location = location
         self.biography = biography
-        self.profile_photo = profile_photo
-        self.joined_on = joined_on
 
     def is_authenticated(self):
         return True
