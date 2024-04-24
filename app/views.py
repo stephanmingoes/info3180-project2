@@ -8,7 +8,7 @@ This file creates your application.
 from app import app, db, login_manager
 from flask import render_template, request, jsonify, send_file
 from app.forms import LoginForm, RegisterForm
-from app.models import Posts, Follows, Likes, Users
+from app.models import Posts, Follows, Likes, Users, Token
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import generate_csrf
@@ -91,7 +91,16 @@ def login():
 
 
 @app.route('/api/v1/auth/logout', methods=['POST'])
+@login_required
 def logout():
+    auth_headers = request.headers.get('Authorization', '').split()
+    if not auth_headers or len(auth_headers) != 2:
+        return jsonify({"message": "Login required"}), 401
+
+    expired_token = Token(token_string=auth_headers[1])
+    db.session.add(expired_token)
+    db.session.commit()
+
     logout_user()
 
     return jsonify({"message": "User logged out"}), 200
@@ -119,6 +128,12 @@ def load_user_from_request(request):
         return None
     try:
         token = auth_headers[1]
+        expired_token = db.session.execute(
+            db.select(Token).filter_by(token_string=token)).scalar()
+
+        if expired_token:
+            return None
+
         data = jwt.decode(
             token, app.config['SECRET_KEY'], algorithms=["HS256"])
         user = db.session.execute(

@@ -132,3 +132,29 @@ class Users(db.Model):
 
     def __repr__(self):
         return '<Users %r>' % (self.username)
+
+
+class Token(db.Model):
+    __tablename__ = 'token'
+
+    id = db.Column(db.Integer, primary_key=True)
+    token_string = db.Column(db.Text)
+    expired_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        try:
+            return unicode(self.id)  # python 2 support
+        except NameError:
+            return str(self.id)  # python 3 support
+
+    def __repr__(self):
+        return '<Token %r>' % (self.id)
