@@ -43,7 +43,8 @@ def register():
         if existing_user:
             return jsonify({"message": "User or email taken already"}), 401
 
-        # Uncomment for accepting files
+        # Uncomment for accepting files (the profile pic)! Look in forms.py as well!
+
         # file = form.profile_photo.data
         # filename = secure_filename(file.filename)
 
@@ -82,7 +83,8 @@ def login():
         login_user(user)
 
         return jsonify({
-            "token": token
+            "token": token,
+            "message": "User successfully logged in"
         }), 200
 
     return jsonify({"message": "Login Failed"}), 401
@@ -96,6 +98,7 @@ def logout():
 
 
 @app.route('/api/v1/posts')
+# ADD THIS TO THE REQUESTS !
 @login_required
 def get_posts():
     posts = db.session.execute(db.select(Posts)).scalars().all()
@@ -104,15 +107,15 @@ def get_posts():
     })
 
 
-@login_manager.user_loader
-def load_user(id):
-    return db.session.execute(db.select(Users).filter_by(id=id)).scalar()
+@login_manager.unauthorized_handler
+def unauthorized():
+    return jsonify({"message": "Login required"}), 401
 
 
 @login_manager.request_loader
 def load_user_from_request(request):
     auth_headers = request.headers.get('Authorization', '').split()
-    if len(auth_headers) != 2:
+    if not auth_headers or len(auth_headers) != 2:
         return None
     try:
         token = auth_headers[1]
@@ -121,8 +124,10 @@ def load_user_from_request(request):
         user = db.session.execute(
             db.select(Users).filter_by(username=data['sub'])).scalar()
 
-        if user:
-            return user
+        if not user:
+            return None
+
+        return user
     except:
         return None
 
