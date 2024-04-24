@@ -36,16 +36,6 @@ def get_csrf():
 @app.route('/api/v1/register', methods=['POST'])
 def register():
     form = RegisterForm()
-    print("username: ", form.data['username'])
-    print("firstname: ", form.data['firstname'])
-    print("lastname: ", form.data['lastname'])
-    print("email: ", form.data['email'])
-    print("password: ", form.data['password'])
-    print("location: ", form.data['location'])
-    print("biography: ", form.data['biography'])
-    print("profile_photo: ", form.data['profile_photo'])
-    print("csrf_token: ", form.data['csrf_token'])
-
     if form.validate():
         existing_user = db.session.execute(db.select(Users).filter(
             (Users.username == form.data["username"]) | (Users.email == form.data["email"]))).scalar()
@@ -82,7 +72,7 @@ def register():
 def login():
     form = LoginForm()
 
-    if form.validate_on_submit():
+    if form.validate():
         user = db.session.execute(db.select(Users).filter_by(
             username=form.data["username"])).scalar()
 
