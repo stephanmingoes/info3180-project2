@@ -17,5 +17,5 @@ class RegisterForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired()])
     location = StringField('Location', validators=[InputRequired()])
     biography = TextAreaField('Location', validators=[InputRequired()])
-    # profile_photo = FileField("Poster", validators=[FileRequired(), FileAllowed(
-    #     ['jpg', 'png'], 'Upload a .png or .jpg file')])
+    profile_photo = FileField("Profile Photo", validators=[FileRequired(), FileAllowed(
+        ['jpg', 'png', 'jpeg'], 'Upload a .png or .jpg file')])

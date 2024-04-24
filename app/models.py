@@ -105,7 +105,7 @@ class Users(db.Model):
     followers = db.relationship('Follows', foreign_keys=[
                                 Follows.follower_id], backref='followers', lazy=True)
 
-    def __init__(self, username, password, firstname, lastname, email, location, biography):
+    def __init__(self, username, password, firstname, lastname, email, location, biography, profile_photo):
         self.username = username
         self.password = generate_password_hash(
             password, method='pbkdf2:sha256')
@@ -114,6 +114,7 @@ class Users(db.Model):
         self.email = email
         self.location = location
         self.biography = biography
+        self.profile_photo = profile_photo
 
     def is_authenticated(self):
         return True

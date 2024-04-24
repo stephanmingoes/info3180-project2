@@ -4,7 +4,7 @@ Jinja2 Documentation:    https://jinja.palletsprojects.com/
 Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
-
+from os.path import isdir
 from app import app, db, login_manager
 from flask import render_template, request, jsonify, send_file
 from app.forms import LoginForm, RegisterForm
@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import check_password_hash
 import jwt
+from werkzeug.datastructures import CombinedMultiDict
 from datetime import datetime, timedelta
 import os
 
@@ -35,32 +36,46 @@ def get_csrf():
 @app.route('/api/v1/register', methods=['POST'])
 def register():
     form = RegisterForm()
+    print("username: ", form.data['username'])
+    print("firstname: ", form.data['firstname'])
+    print("lastname: ", form.data['lastname'])
+    print("email: ", form.data['email'])
+    print("password: ", form.data['password'])
+    print("location: ", form.data['location'])
+    print("biography: ", form.data['biography'])
+    print("profile_photo: ", form.data['profile_photo'])
+    print("csrf_token: ", form.data['csrf_token'])
 
-    if form.validate_on_submit():
+    if form.validate():
         existing_user = db.session.execute(db.select(Users).filter(
             (Users.username == form.data["username"]) | (Users.email == form.data["email"]))).scalar()
-
+     
         if existing_user:
-            return jsonify({"message": "User or email taken already"}), 401
+            return jsonify({"message": "User or email taken already"}), 409
 
         # Uncomment for accepting files (the profile pic)! Look in forms.py as well!
 
-        # file = form.profile_photo.data
-        # filename = secure_filename(file.filename)
+        file = form.profile_photo.data
+        filename = secure_filename(file.filename)
 
-        # file.save(os.path.join(
-        #     app.config["UPLOAD_FOLDER"], filename
-        # ))
+        if not isdir(app.config["UPLOAD_FOLDER"]):
+            os.makedirs(app.config["UPLOAD_FOLDER"])
 
+        file.save(os.path.join(
+            app.config["UPLOAD_FOLDER"], filename
+        ))
+    
         new_user = Users(username=form.data["username"], firstname=form.data["firstname"], lastname=form.data["lastname"],
-                         password=form.data["password"], email=form.data["email"], location=form.data["location"], biography=form.data["biography"])
+                         password=form.data["password"], email=form.data["email"], location=form.data["location"], biography=form.data["biography"], 
+                         profile_photo=filename)
 
         db.session.add(new_user)
         db.session.commit()
 
-        return jsonify({"message": "Registration was successful"}), 200
+   
+        return jsonify({"message": "Registration was successful, proceed to login"}), 200
 
-    return jsonify({"message": "Registration Failed"}), 401
+    return jsonify({"message": "Registration Failed"}), 400
 
 
 @app.route('/api/v1/auth/login', methods=['POST'])
@@ -87,7 +102,7 @@ def login():
             "message": "User successfully logged in"
         }), 200
 
-    return jsonify({"message": "Login Failed"}), 401
+    return jsonify({"message": "Login Failed"}), 400
 
 
 @app.route('/api/v1/auth/logout', methods=['POST'])
