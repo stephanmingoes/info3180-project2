@@ -51,7 +51,7 @@ def register():
             (Users.username == form.data["username"]) | (Users.email == form.data["email"]))).scalar()
      
         if existing_user:
-            return jsonify({"message": "User or email taken already"}), 409
+            return jsonify({"message": "Username or email taken already"}), 409
 
         # Uncomment for accepting files (the profile pic)! Look in forms.py as well!
 
