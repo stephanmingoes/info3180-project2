@@ -8,12 +8,17 @@ from os.path import isdir
 from app import app, db, login_manager
 from flask import render_template, request, jsonify, send_file
 <<<<<<< HEAD
+<<<<<<< HEAD
 from app.forms import LoginForm, RegisterForm, PostForm
 from app.models import Posts, Follows, Likes, Users
 =======
 from app.forms import LoginForm, RegisterForm
 from app.models import Posts, Follows, Likes, Users, Token
 >>>>>>> origin/main
+=======
+from app.forms import LoginForm, RegisterForm
+from app.models import Posts, Follows, Likes, Users, Token
+>>>>>>> ddbfeb93c1c1e39c138eda047a5e0c2d4ea9c4a9
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import generate_csrf
@@ -77,12 +82,17 @@ def register():
 def login():
     form = LoginForm()
 <<<<<<< HEAD
+<<<<<<< HEAD
     
     if form.validate_on_submit():
 =======
 
     if form.validate():
 >>>>>>> origin/main
+=======
+
+    if form.validate():
+>>>>>>> ddbfeb93c1c1e39c138eda047a5e0c2d4ea9c4a9
         user = db.session.execute(db.select(Users).filter_by(
             username=form.data["username"])).scalar()
 
