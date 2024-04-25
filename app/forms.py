@@ -19,3 +19,7 @@ class RegisterForm(FlaskForm):
     biography = TextAreaField('Location', validators=[InputRequired()])
     # profile_photo = FileField("Poster", validators=[FileRequired(), FileAllowed(
     #     ['jpg', 'png'], 'Upload a .png or .jpg file')])
+
+class PostForm(FlaskForm):
+    photo = FileField('Photo', validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg'])])
+    caption = StringField('Caption')

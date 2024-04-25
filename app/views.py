@@ -7,7 +7,7 @@ This file creates your application.
 
 from app import app, db, login_manager
 from flask import render_template, request, jsonify, send_file
-from app.forms import LoginForm, RegisterForm
+from app.forms import LoginForm, RegisterForm, PostForm
 from app.models import Posts, Follows, Likes, Users
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
@@ -66,7 +66,7 @@ def register():
 @app.route('/api/v1/auth/login', methods=['POST'])
 def login():
     form = LoginForm()
-
+    
     if form.validate_on_submit():
         user = db.session.execute(db.select(Users).filter_by(
             username=form.data["username"])).scalar()
@@ -97,6 +97,68 @@ def logout():
     return jsonify({"message": "User logged out"}), 200
 
 
+@app.route('/api/v1/users/<user_id>/posts', methods=['POST'])
+@login_required
+def add_post(user_id):
+    # if current_user.id != user_id:
+    #     return jsonify({"message": "You are not allowed to post to this feed"}), 403
+    
+    form = PostForm()
+
+    # if form.validate_on_submit():
+    photo_file = form.photo.data
+        
+    if photo_file:
+        filename = secure_filename(photo_file.filename)
+        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        photo_file.save(path)
+
+        caption = request.form.get('caption', '')
+
+        post = Posts(user_id=user_id, photo=filename, caption=caption)
+        db.session.add(post)
+        db.session.commit()
+        return jsonify({"message": "Post added Sucessfully"}), 200
+    else:
+        return jsonify({"message": "Invalid file"}), 400
+    # else:
+    #     return jsonify({"message": "Form validation failed"}), 400
+
+@app.route('/api/v1/users/<user_id>/posts', methods=['get'])
+@login_required
+def get_user_posts(user_id):
+    query = db.select(Posts).where(Posts.user_id == user_id)
+    posts = db.session.execute(query).scalars().all()
+    post_info = [{
+        'id': post.id,
+        'caption': post.caption,
+        'photo': post.photo,
+        'created_on': post.created_on.strftime('%m-%d-%Y %H:%M:%S'),
+        'likes': len(post.likes)
+    } for post in posts]
+
+    return jsonify({'posts': post_info})
+
+@app.route('/api/users/<user_id>/follow', methods=['POST'])
+@login_required
+def follow_user(user_id):
+    if current_user.id == user_id:
+        return jsonify({"message": "Not allowed"}), 400
+    
+    target_user = Users.query.get(user_id)
+    if not target_user:
+        return jsonify({"message": "User not found"}), 404
+    
+    if Follows.query.filter_by(follower_id=current_user.id, user_id=user_id).first():
+        return jsonify({"message": "You are already following this user"}), 400
+    
+    follow = Follows(follower_id=current_user.id, user_id=user_id)
+    db.session.add(follow)
+    db.session.commit()
+
+    return jsonify({"message": "You followed this user"}), 200
+
+
 @app.route('/api/v1/posts')
 # ADD THIS TO THE REQUESTS !
 @login_required
@@ -106,6 +168,21 @@ def get_posts():
         "posts": [{"id": p.id, "caption": p.caption, "photo": p.photo, "likes": len(p.likes)} for p in posts]
     })
 
+@app.route('/api/v1/posts/<post_id>/like', methods=['POST'])
+@login_required
+def like_post(post_id):
+    post = Posts.query.get(post_id)
+    if not post:
+        return jsonify({"message": "Post not found"}), 404
+    
+    if Likes.query.filter_by(user_id=current_user.id, post_id=post_id).first():
+        return jsonify({"message": "You already liked this post"}), 400
+    
+    like = Likes(user_id=current_user.id, post_id=post_id)
+    db.session.add(like)
+    db.session.commit()
+    
+    return jsonify({"message": "Post liked"}), 200
 
 @login_manager.unauthorized_handler
 def unauthorized():
