@@ -12,6 +12,6 @@ class Config(object):
     # SQLALCHEMY_DATABASE_URI = os.environ.get(
        # 'DATABASE_URL', '').replace('postgres://', 'postgresql://')
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL', 'postgresql://project2_user:password@localhost/project2')
+        'DATABASE_URL', '').replace('postgres://', 'postgresql://')
     # This is just here to suppress a warning from SQLAlchemy as it will soon be removed
     SQLALCHEMY_TRACK_MODIFICATIONS = False
