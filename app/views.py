@@ -6,19 +6,16 @@ This file creates your application.
 """
 from os.path import isdir
 from app import app, db, login_manager
-from flask import render_template, request, jsonify, send_file
-<<<<<<< HEAD
-<<<<<<< HEAD
+from flask import render_template, request, jsonify, send_file, send_from_directory
+
 from app.forms import LoginForm, RegisterForm, PostForm
 from app.models import Posts, Follows, Likes, Users
-=======
+
 from app.forms import LoginForm, RegisterForm
 from app.models import Posts, Follows, Likes, Users, Token
->>>>>>> origin/main
-=======
+
 from app.forms import LoginForm, RegisterForm
 from app.models import Posts, Follows, Likes, Users, Token
->>>>>>> ddbfeb93c1c1e39c138eda047a5e0c2d4ea9c4a9
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import generate_csrf
@@ -27,6 +24,7 @@ import jwt
 from werkzeug.datastructures import CombinedMultiDict
 from datetime import datetime, timedelta
 import os
+from sqlalchemy.orm import joinedload
 
 
 ###
@@ -81,18 +79,7 @@ def register():
 @app.route('/api/v1/auth/login', methods=['POST'])
 def login():
     form = LoginForm()
-<<<<<<< HEAD
-<<<<<<< HEAD
-    
-    if form.validate_on_submit():
-=======
-
     if form.validate():
->>>>>>> origin/main
-=======
-
-    if form.validate():
->>>>>>> ddbfeb93c1c1e39c138eda047a5e0c2d4ea9c4a9
         user = db.session.execute(db.select(Users).filter_by(
             username=form.data["username"])).scalar()
 
@@ -131,18 +118,14 @@ def logout():
     return jsonify({"message": "User logged out"}), 200
 
 
-@app.route('/api/v1/users/<user_id>/posts', methods=['POST'])
+@app.route('/api/v1/posts', methods=['POST'])
 @login_required
-def add_post(user_id):
-    # if current_user.id != user_id:
-    #     return jsonify({"message": "You are not allowed to post to this feed"}), 403
-    
+def add_post():
+    user_id = current_user.id
     form = PostForm()
-
-    # if form.validate_on_submit():
-    photo_file = form.photo.data
-        
-    if photo_file:
+   
+    if form.validate():
+        photo_file = form.photo.data
         filename = secure_filename(photo_file.filename)
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         photo_file.save(path)
@@ -153,10 +136,10 @@ def add_post(user_id):
         db.session.add(post)
         db.session.commit()
         return jsonify({"message": "Post added Sucessfully"}), 200
+
     else:
-        return jsonify({"message": "Invalid file"}), 400
-    # else:
-    #     return jsonify({"message": "Form validation failed"}), 400
+    
+        return jsonify({"message": "Form validation failed"}), 400
 
 @app.route('/api/v1/users/<user_id>/posts', methods=['get'])
 @login_required
@@ -193,14 +176,38 @@ def follow_user(user_id):
     return jsonify({"message": "You followed this user"}), 200
 
 
-@app.route('/api/v1/posts')
-# ADD THIS TO THE REQUESTS !
+@app.route('/api/v1/posts', methods=['GET'])
 @login_required
 def get_posts():
-    posts = db.session.execute(db.select(Posts)).scalars().all()
-    return jsonify({
-        "posts": [{"id": p.id, "caption": p.caption, "photo": p.photo, "likes": len(p.likes)} for p in posts]
-    })
+    # Retrieve posts with joined loading to include users and likes
+    posts = db.session.query(Posts).options(joinedload(Posts.users), joinedload(Posts.likes)).all()
+
+    # Define the current user's ID
+    current_user_id = current_user.id if current_user.is_authenticated else None
+
+    # Construct JSON response with desired information
+    response_posts = []
+    for p in posts:
+        # Determine if the current user liked this post
+        liked_by_current_user = any(like.user_id == current_user_id for like in p.likes)
+
+        # Construct the post object with user and like information
+        post_info = {
+            "id": p.id,
+            "caption": p.caption,
+            "photo": p.photo,
+            "user": {
+                "id": p.users.id,
+                "username": p.users.username, 
+                "profile_photo": p.users.profile_photo if p.users.profile_photo else ""
+            },
+            "likes": len(p.likes),
+            "liked_by_current_user": liked_by_current_user, 
+            "created_on": p.created_on
+        }
+        response_posts.append(post_info)
+
+    return jsonify({"posts": response_posts})
 
 @app.route('/api/v1/posts/<post_id>/like', methods=['POST'])
 @login_required
@@ -217,6 +224,12 @@ def like_post(post_id):
     db.session.commit()
     
     return jsonify({"message": "Post liked"}), 200
+
+@app.route('/api/v1/image/<filename>', methods=['GET'])
+def get_poster(filename):
+    current_dir = os.getcwd()
+    return send_from_directory(os.path.join(current_dir, app.config['UPLOAD_FOLDER']), filename)
+
 @app.route('/api/v1/is_logged_in', methods=['GET'])
 @login_required
 def isLoggedIn():

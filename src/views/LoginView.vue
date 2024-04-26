@@ -63,7 +63,7 @@
 import axios from "axios";
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { redirectLoggedInUser } from "../utils/functions";
+import { redirectLoggedInUser, getCsrfToken } from "../utils/functions";
 const router = useRouter();
 const error = ref("");
 const success = ref("");
@@ -103,18 +103,8 @@ async function loginUser() {
   }
 }
 
-async function getCsrfToken() {
-  try {
-    const res = await fetch("/api/v1/csrf-token");
-    const data = await res.json();
-    csfr_token.value = data.csrf_token;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 onMounted(async () => {
   await redirectLoggedInUser();
-  await getCsrfToken();
+  csfr_token.value = await getCsrfToken();
 });
 </script>

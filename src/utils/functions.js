@@ -29,3 +29,12 @@ export async function redirectLoggedOutUser() {
     window.location.href = "/login";
   }
 }
+export async function getCsrfToken() {
+  try {
+    const res = await fetch("/api/v1/csrf-token");
+    const data = await res.json();
+    return data.csrf_token;
+  } catch (error) {
+    console.log(error);
+  }
+}
