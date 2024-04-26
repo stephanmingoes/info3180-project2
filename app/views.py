@@ -197,8 +197,6 @@ def get_user_posts(user_id):
 @app.route('/api/users/<user_id>/follow', methods=['POST'])
 @login_required
 def follow_user(user_id):
-    print(current_user.id)
-    print(user_id)
     if current_user.id == int(user_id):
         return jsonify({"message": "Not allowed"}), 400
 
