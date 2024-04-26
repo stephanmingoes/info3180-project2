@@ -17,7 +17,9 @@
             v-for="post in posts"
             :key="post.id"
           >
-            <div class="flex flex-row gap-2 px-4 py-2">
+            <div
+              class="flex flex-row justify-start items-center gap-2 px-4 py-2"
+            >
               <div class="">
                 <img
                   :src="`/api/v1/image/${post.user.profile_photo}`"
@@ -25,7 +27,9 @@
                 />
               </div>
               <div class="">
-                <p>{{ post.user.username }}</p>
+                <RouterLink :to="`/users/${post.user.id}`">
+                  <p class="font-semibold">{{ post.user.username }}</p>
+                </RouterLink>
               </div>
             </div>
             <div class="">
