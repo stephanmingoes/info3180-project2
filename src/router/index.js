@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
+import { isUserLoggedIn } from "../utils/functions";
 
 // ### Create and assign all routes below to their respective pages
 

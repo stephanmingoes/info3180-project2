@@ -19,13 +19,13 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
-              <RouterLink to="/" class="nav-link active">Home</RouterLink>
+              <RouterLink to="/" class="nav-link">Home</RouterLink>
             </li>
             <li class="nav-item">
               <RouterLink class="nav-link" to="/explore">Explore</RouterLink>
             </li>
-            <li class="nav-item">
-              <RouterLink class="nav-link" to="/logout">Logout</RouterLink>
+            <li class="nav-item" @click="logout">
+              <a class="nav-link lo">Logout</a>
             </li>
           </ul>
         </div>
@@ -36,6 +36,27 @@
 
 <script setup>
 import { RouterLink } from "vue-router";
+import { useRouter } from "vue-router";
+import { authenticationAxiosInstance } from "../api";
+import { onMounted } from "vue";
+
+const router = useRouter();
+
+async function logout() {
+  try {
+    await authenticationAxiosInstance.post("/api/v1/auth/logout");
+    localStorage.removeItem("jwt_token");
+    router.push("/login");
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+onMounted(async () => {});
 </script>
 
-<style></style>
+<style>
+.lo {
+  cursor: pointer;
+}
+</style>

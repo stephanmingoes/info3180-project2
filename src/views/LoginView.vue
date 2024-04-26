@@ -63,6 +63,7 @@
 import axios from "axios";
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { redirectLoggedInUser } from "../utils/functions";
 const router = useRouter();
 const error = ref("");
 const success = ref("");
@@ -113,6 +114,7 @@ async function getCsrfToken() {
 }
 
 onMounted(async () => {
+  await redirectLoggedInUser();
   await getCsrfToken();
 });
 </script>

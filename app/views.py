@@ -120,6 +120,10 @@ def get_posts():
         "posts": [{"id": p.id, "caption": p.caption, "photo": p.photo, "likes": len(p.likes)} for p in posts]
     })
 
+@app.route('/api/v1/is_logged_in', methods=['GET'])
+@login_required
+def isLoggedIn():
+    return jsonify({"message": "User is logged in"}), 200
 
 @login_manager.unauthorized_handler
 def unauthorized():

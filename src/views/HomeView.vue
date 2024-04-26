@@ -32,8 +32,11 @@
 <style></style>
 
 <script setup>
-import { ref } from "vue";
 import { RouterLink } from "vue-router";
+import { onMounted } from "vue";
+import { redirectLoggedInUser } from "../utils/functions";
 
-let message = ref("Hello World! This is a VueJS and Flask Starter Template.");
+onMounted(async () => {
+  await redirectLoggedInUser();
+});
 </script>
