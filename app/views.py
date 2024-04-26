@@ -47,7 +47,7 @@ def register():
     if form.validate():
         existing_user = db.session.execute(db.select(Users).filter(
             (Users.username == form.data["username"]) | (Users.email == form.data["email"]))).scalar()
-     
+
         if existing_user:
             return jsonify({"message": "Username or email taken already"}), 409
 
@@ -62,15 +62,15 @@ def register():
         file.save(os.path.join(
             app.config["UPLOAD_FOLDER"], filename
         ))
-    
+
         new_user = Users(username=form.data["username"], firstname=form.data["firstname"], lastname=form.data["lastname"],
-                         password=form.data["password"], email=form.data["email"], location=form.data["location"], biography=form.data["biography"], 
+                         password=form.data["password"], email=form.data["email"], location=form.data[
+                             "location"], biography=form.data["biography"],
                          profile_photo=filename)
 
         db.session.add(new_user)
         db.session.commit()
 
-   
         return jsonify({"message": "Registration was successful, proceed to login"}), 200
 
     return jsonify({"message": "Registration Failed"}), 400
@@ -123,7 +123,7 @@ def logout():
 def add_post():
     user_id = current_user.id
     form = PostForm()
-   
+
     if form.validate():
         photo_file = form.photo.data
         filename = secure_filename(photo_file.filename)
@@ -138,8 +138,46 @@ def add_post():
         return jsonify({"message": "Post added Sucessfully"}), 200
 
     else:
-    
+
         return jsonify({"message": "Form validation failed"}), 400
+
+
+@app.route('/api/v1/user/<user_id>')
+@login_required
+def get_user_info(user_id):
+    user = db.session.execute(
+        db.select(Users).options(joinedload(Users.posts), joinedload(Users.followers), joinedload(Users.follows)).filter_by(id=user_id)).scalar()
+
+    return jsonify({
+        'id': user.id,
+        'username': user.username,
+        'firstname': user.firstname,
+        'lastname': user.lastname,
+        'email': user.email,
+        'location': user.location,
+        'biography': user.biography,
+        'profile_photo': user.profile_photo,
+        'joined_on': user.joined_on,
+        'posts': [
+            {
+                'id': p.id,
+                'caption': p.caption,
+                'photo': p.photo,
+                'created_on': p.created_on,
+            } for p in user.posts
+        ],
+        'follows': [
+            {
+                'user_id': f.follower_id
+            } for f in user.follows
+        ],
+        'followers': [
+            {
+                'user_id': f.user_id
+            } for f in user.followers
+        ],
+    })
+
 
 @app.route('/api/v1/users/<user_id>/posts', methods=['get'])
 @login_required
@@ -156,20 +194,23 @@ def get_user_posts(user_id):
 
     return jsonify({'posts': post_info})
 
+
 @app.route('/api/users/<user_id>/follow', methods=['POST'])
 @login_required
 def follow_user(user_id):
-    if current_user.id == user_id:
+    print(current_user.id)
+    print(user_id)
+    if current_user.id == int(user_id):
         return jsonify({"message": "Not allowed"}), 400
-    
+
     target_user = Users.query.get(user_id)
     if not target_user:
         return jsonify({"message": "User not found"}), 404
-    
-    if Follows.query.filter_by(follower_id=current_user.id, user_id=user_id).first():
+
+    if Follows.query.filter_by(follower_id=user_id, user_id=current_user.id).first():
         return jsonify({"message": "You are already following this user"}), 400
-    
-    follow = Follows(follower_id=current_user.id, user_id=user_id)
+
+    follow = Follows(follower_id=user_id, user_id=current_user.id)
     db.session.add(follow)
     db.session.commit()
 
@@ -180,34 +221,34 @@ def follow_user(user_id):
 @login_required
 def get_posts():
 
-    posts = db.session.query(Posts).options(joinedload(Posts.users), joinedload(Posts.likes)).all()
-
+    posts = db.session.query(Posts).options(
+        joinedload(Posts.users), joinedload(Posts.likes)).all()
 
     current_user_id = current_user.id
 
-   
     response_posts = []
     for p in posts:
 
-        liked_by_current_user = any(like.user_id == current_user_id for like in p.likes)
+        liked_by_current_user = any(
+            like.user_id == current_user_id for like in p.likes)
 
-  
         post_info = {
             "id": p.id,
             "caption": p.caption,
             "photo": p.photo,
             "user": {
                 "id": p.users.id,
-                "username": p.users.username, 
+                "username": p.users.username,
                 "profile_photo": p.users.profile_photo if p.users.profile_photo else ""
             },
             "likes": len(p.likes),
-            "liked_by_current_user": liked_by_current_user, 
+            "liked_by_current_user": liked_by_current_user,
             "created_on": p.created_on
         }
         response_posts.append(post_info)
 
     return jsonify({"posts": response_posts})
+
 
 @app.route('/api/v1/posts/<post_id>/like', methods=['POST'])
 @login_required
@@ -215,25 +256,28 @@ def like_post(post_id):
     post = Posts.query.get(post_id)
     if not post:
         return jsonify({"message": "Post not found"}), 404
-    
+
     if Likes.query.filter_by(user_id=current_user.id, post_id=post_id).first():
         return jsonify({"message": "You already liked this post"}), 400
-    
+
     like = Likes(user_id=current_user.id, post_id=post_id)
     db.session.add(like)
     db.session.commit()
-    
+
     return jsonify({"message": "Post liked"}), 200
+
 
 @app.route('/api/v1/image/<filename>', methods=['GET'])
 def get_poster(filename):
     current_dir = os.getcwd()
     return send_from_directory(os.path.join(current_dir, app.config['UPLOAD_FOLDER']), filename)
 
+
 @app.route('/api/v1/is_logged_in', methods=['GET'])
 @login_required
 def isLoggedIn():
     return jsonify({"message": "User is logged in"}), 200
+
 
 @login_manager.unauthorized_handler
 def unauthorized():
