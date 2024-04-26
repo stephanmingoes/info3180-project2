@@ -97,7 +97,6 @@ onMounted(async () => {
     const response = await authenticationAxiosInstance.get(
       `/api/v1/user/${userId}`
     );
-    console.dir(response.data);
 
     user.value = response.data;
   } catch (error) {
