@@ -1,7 +1,7 @@
 <template>
   <div class="container">
-    <div class="flex flex-row gap-4">
-      <div class="flex-1">
+    <div class="flex flex-row justify-center gap-4">
+      <div class="">
         <div v-if="isLoading" class="text-center">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -13,7 +13,7 @@
         </div>
         <div v-else class="flex flex-col gap-5">
           <div
-            class="flex flex-col gap-2 bg-white rounded-md shadow-md"
+            class="flex flex-col gap-2 bg-white rounded-md shadow-md w-96"
             v-for="post in posts"
             :key="post.id"
           >
@@ -29,10 +29,7 @@
               </div>
             </div>
             <div class="">
-              <img
-                :src="`/api/v1/image/${post.photo}`"
-                class="w-full h-96 object-cover"
-              />
+              <img :src="`/api/v1/image/${post.photo}`" class="w-full h-auto" />
             </div>
             <div class="px-4 py-2">
               <p>{{ post.caption }}</p>
@@ -53,7 +50,7 @@
           </div>
         </div>
       </div>
-      <div class="flex-[0.3]">
+      <div class="">
         <RouterLink to="/posts/new">
           <button
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
