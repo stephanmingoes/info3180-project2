@@ -179,19 +179,19 @@ def follow_user(user_id):
 @app.route('/api/v1/posts', methods=['GET'])
 @login_required
 def get_posts():
-    # Retrieve posts with joined loading to include users and likes
+
     posts = db.session.query(Posts).options(joinedload(Posts.users), joinedload(Posts.likes)).all()
 
-    # Define the current user's ID
-    current_user_id = current_user.id if current_user.is_authenticated else None
 
-    # Construct JSON response with desired information
+    current_user_id = current_user.id
+
+   
     response_posts = []
     for p in posts:
-        # Determine if the current user liked this post
+
         liked_by_current_user = any(like.user_id == current_user_id for like in p.likes)
 
-        # Construct the post object with user and like information
+  
         post_info = {
             "id": p.id,
             "caption": p.caption,
