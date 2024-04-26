@@ -147,9 +147,8 @@ def add_post():
 def get_user_info(user_id):
     user = db.session.execute(
         db.select(Users).options(joinedload(Users.posts), joinedload(Users.followers), joinedload(Users.follows)).filter_by(id=user_id)).scalar()
-    followers = [ user.id for user in user.followers]
-    print(followers)
-    print(current_user.id)
+    followers = [f.user_id for f in user.followers]
+
     return jsonify({
         'id': user.id,
         'username': user.username,
