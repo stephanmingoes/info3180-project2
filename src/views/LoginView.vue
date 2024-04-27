@@ -94,7 +94,8 @@ async function loginUser() {
     const token = res.data.token;
     localStorage.setItem("jwt_token", token);
     error.value = "";
-    router.push("/explore");
+
+    window.location.href = "/explore";
   } catch (err) {
     error.value = err.response.data.message ?? "Something went wrong";
     success.value = "";

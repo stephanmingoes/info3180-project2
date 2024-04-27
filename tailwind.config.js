@@ -4,7 +4,7 @@ module.exports = {
     "./index.html",
 
     "./src/**/*.{js,ts,jsx,tsx,vue}",
-    "!./src/components/AppHeader.vue",
+    // "!./src/components/AppHeader.vue",
   ],
   theme: {
     extend: {},

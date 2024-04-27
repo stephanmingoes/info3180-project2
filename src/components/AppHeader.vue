@@ -1,30 +1,23 @@
 <template>
   <header>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-      <div class="container-fluid">
-        <a class="navbar-brand logo-font text-lg font-bold" href="/"
-          >Photogram</a
-        >
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
+    <nav class="bg-primary fixed-top text-white p-3">
+      <div class="flex flex-row justify-between items-center">
+        <a class="logo-font text-lg font-bold" href="/">Photogram</a>
+
+        <div class="flex flex-row justify-center items-center">
+          <ul class="navbar-nav me-auto flex flex-row gap-4">
+            <li class="nav-item" v-if="!isLoggedIn">
               <RouterLink to="/" class="nav-link">Home</RouterLink>
             </li>
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/explore">Explore</RouterLink>
+              <RouterLink class="nav-link" to="/explore" v-if="isLoggedIn"
+                >Explore</RouterLink
+              >
             </li>
-            <li class="nav-item" @click="logout">
+            <li class="nav-item" @click="goToMyProfile" v-if="isLoggedIn">
+              <a class="nav-link lo">My Profile</a>
+            </li>
+            <li class="nav-item" @click="logout" v-if="isLoggedIn">
               <a class="nav-link lo">Logout</a>
             </li>
           </ul>
@@ -39,24 +32,38 @@ import { RouterLink } from "vue-router";
 import { useRouter } from "vue-router";
 import { authenticationAxiosInstance } from "../api";
 import { onMounted } from "vue";
-
+import { ref } from "vue";
+import { isUserLoggedIn } from "../utils/functions";
 const router = useRouter();
-
+const isLoggedIn = ref(false);
 async function logout() {
   try {
     await authenticationAxiosInstance.post("/api/v1/auth/logout");
     localStorage.removeItem("jwt_token");
-    router.push("/login");
+    window.location.href = "/login";
   } catch (error) {
     console.log(error);
   }
 }
 
-onMounted(async () => {});
+async function goToMyProfile() {
+  const { data } = await authenticationAxiosInstance.get("/api/v1/user");
+  window.location.href = `/users/${data.id}`;
+}
+
+onMounted(async () => {
+  isLoggedIn.value = await isUserLoggedIn();
+});
 </script>
 
 <style>
 .lo {
   cursor: pointer;
+}
+.color-white {
+  color: white;
+}
+.nav-container {
+  padding: 1rem;
 }
 </style>

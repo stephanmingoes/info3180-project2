@@ -275,6 +275,12 @@ def get_poster(filename):
 def isLoggedIn():
     return jsonify({"message": "User is logged in"}), 200
 
+# get user id 
+@app.route('/api/v1/user', methods=['GET'])
+@login_required
+def get_user():
+    return jsonify({"id": current_user.id}), 200
+
 
 @login_manager.unauthorized_handler
 def unauthorized():
